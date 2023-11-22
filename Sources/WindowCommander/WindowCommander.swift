@@ -32,19 +32,30 @@ fileprivate struct HandlerInfo {
    /// Weak reference (``HandlerWeakRef``) of stored handler.
    let ref: HandlerWeakRef
    
-   /// Related window ``UUID`` to the handler instance.
+   /// Related window `UUID` to the handler instance.
    var windowID: UUID?
 }
 
 /// An object that coordinates all command triggers by tags and registered handler instances.
 public class WindowCommander {
-   static let shared = WindowCommander()
+   /// The shared ``WindowCommander`` instance.
+   public static let shared = WindowCommander()
    
+   /// Stored handler instances and their `UUID`s.
    private var mHandlerInstancesMap: [UUID /* instance id */: HandlerInfo] = [:]
-   private var mHandlerTypesMap: [TypeID /* type id */: (instances: Set<UUID>, handler: MethodBindingHandler)] = [:]
-   private var mWindowHandlersMap: [UUID /* window id */: Set<UUID/* related handler instance id */>] = [:]
-   private var mObserverHandle: NSObjectProtocol? = nil
    
+   /// Mapping of ``TypeID`` of stored handlers to related `UUID`s handlers and ``MethodBindingHandler``.
+   private var mHandlerTypesMap: [TypeID /* type id */: (instances: Set<UUID>, handler: MethodBindingHandler)] = [:]
+   
+   /// Mapping of WindowID to related handler `UUID`s.
+   private var mWindowHandlersMap: [UUID /* window id */: Set<UUID/* related handler instance id */>] = [:]
+   
+   /// Handle of subscription for `NSWindow.didBecomeKeyNotification` notification.
+   private var mObserverHandle: NSObjectProtocol? = nil
+
+   /// Create an instance of ``WindowCommander``.
+   ///
+   /// > Note: This constructor is available only as a part of singleton pattern.
    private init() {
 #if os(macOS)
       mObserverHandle = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: nil) { notification in
@@ -58,9 +69,19 @@ public class WindowCommander {
    }
    
    deinit {
-      NotificationCenter.default.removeObserver(mObserverHandle!)
+      if let handle = mObserverHandle {
+         NotificationCenter.default.removeObserver(handle)
+      }
    }
    
+   /// Associate a command tag with a specific method for a `HandlerType`.
+   ///
+   /// This method is semi-internal, it could be useful in some cases.
+   ///
+   /// > Note: It is not recommended to use this method directly. The `register` method should be used instead.
+   /// - Parameters:
+   ///   - tag: Command tag.
+   ///   - methodKeyPath: Handler method to process commands with the specified tag.
    public func onCommand<HandlerType: AnyObject>(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> MethodHandlerCallbackType) {
       let typeID = typeID(of: HandlerType.self)
       
@@ -72,7 +93,17 @@ public class WindowCommander {
          methodHandler.commandTagAndMethodMap[tag] = methodKeyPath
       }
    }
-   
+
+   /// Add a handler instance to the ``WindowCommander`` registry.
+   ///
+   /// It is possible to add the same instance more than once to the registry.
+   /// This will cause command processing for each call.
+   ///
+   /// This method is semi-internal, it could be useful in some cases.
+   ///
+   /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
+   /// - Parameter handler: A handler instance.
+   /// - Returns: `UUID` of registred handler.
    public func add<HandlerType: AnyObject>(handler: HandlerType) -> UUID {
       let instanceID = UUID()
       let typeID = typeID(of: HandlerType.self)
@@ -89,6 +120,12 @@ public class WindowCommander {
       return instanceID
    }
    
+   /// Remove a handler instance from the ``WindowCommander`` registry.
+   ///
+   /// This method is semi-internal, it could be useful in some cases.
+   ///
+   /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
+   /// - Parameter instanceID: `UUID` of registred handler.
    public func remove(with instanceID: UUID) {
       if let instance = mHandlerInstancesMap[instanceID] {
          mHandlerTypesMap[instance.typeID]!.instances.remove(instanceID)
@@ -109,21 +146,31 @@ public class WindowCommander {
       }
    }
    
+   /// Associate a handler with a specific window context.
+   ///
+   /// This method is semi-internal, it could be useful in some cases.
+   ///
+   /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
+   /// - Parameters:
+   ///   - instanceID: `UUID` of handler instance added to ``WindowCommander`` via `add` method.
+   ///   - windowID: `UUID` of window instance of `NSWindow`.
    public func setCommand(handler instanceID: UUID, for windowID: UUID) {
       guard mHandlerInstancesMap[instanceID] != nil else { return }
       
       if mWindowHandlersMap[windowID] == nil {
          mWindowHandlersMap[windowID] = []
       }
-      
+
       if let oldWindowID = mHandlerInstancesMap[instanceID]!.windowID {
          mWindowHandlersMap[oldWindowID]?.remove(instanceID)
       }
-      
+
       mWindowHandlersMap[windowID]?.insert(instanceID)
       mHandlerInstancesMap[instanceID]!.windowID = windowID
    }
    
+   /// Trigger command.
+   /// - Parameter tag: Tag name of the triggered command.
    public func command(_ tag: String) {
       var expiredHandlers: [UUID] = []
       
@@ -155,6 +202,8 @@ public class WindowCommander {
       expiredHandlers.forEach({ remove(with: $0) })
    }
    
+   /// Process updates on key window events.
+   /// - Parameter keyWindowID: `UUID` of the new key window.
    private func onKeyWindowChanged(_ keyWindowID: UUID) {
       var expiredHandlers: [UUID] = []
       
