@@ -98,7 +98,7 @@ public class WindowCommander {
    }
    
    public func onCommand<HandlerType: AnyObject>(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> MethodHandlerCallbackType) {
-      let typeID = ObjectIdentifier(HandlerType.self).hashValue
+      let typeID = typeID(of: HandlerType.self)
       
       if mHandlerTypesMap[typeID] == nil {
          mHandlerTypesMap[typeID] = (instances: [], handler: CommandToMethodsBindingHandler<HandlerType>())
@@ -111,7 +111,7 @@ public class WindowCommander {
    
    public func add<HandlerType: AnyObject>(handler: HandlerType) -> UUID {
       let instanceID = UUID()
-      let typeID = ObjectIdentifier(HandlerType.self).hashValue
+      let typeID = typeID(of: HandlerType.self)
       
       mHandlerInstancesMap[instanceID] = .init(typeID: typeID, ref: .init(handler), windowID: nil)
       
