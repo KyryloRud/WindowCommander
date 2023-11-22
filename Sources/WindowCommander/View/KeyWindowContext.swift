@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-struct KeyWindowContext<Content>: View where Content: View {
+/// Helper view to register command handlers in the current window context.
+public struct KeyWindowContext<Content>: View where Content: View {
    @State private var windowID: UUID? = nil
    @State private var model = KeyWindowContextModel()
    private let content: () -> Content
@@ -24,7 +25,7 @@ struct KeyWindowContext<Content>: View where Content: View {
       }
    }
    
-   var body: some View {
+   public var body: some View {
       content()
          .background(
             ProxyUIKitView(windowID: $windowID)

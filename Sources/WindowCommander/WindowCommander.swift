@@ -7,16 +7,12 @@
 
 import SwiftUI
 
-protocol WKCommandTagHandler: AnyObject {
-   func onCommandTriggered(tag: String)
-}
-
-protocol WKKeyWindowHandler: AnyObject {
-   func onKeyWindowChanged(isKeyWindow: Bool)
-}
-
+/// Handler wrapper to allow handler deletion on a zero reference counter.
 fileprivate class HandlerWeakRef {
+   /// Handler reference.
    public weak var handler: AnyObject?
+   
+   /// Computed property to check if the handler reference has expired.
    public var expired: Bool {
       get {
          handler == nil
@@ -28,22 +24,35 @@ fileprivate class HandlerWeakRef {
    }
 }
 
+/// The complete list of properties and methods for internal method-binding handler.
 fileprivate protocol MethodBindingHandler {
+   /// If the handler contain any bound methods.
    var isEmpty: Bool { get }
+   
+   /// Call the instance method associated with a specific handler on a specified instance.
+   /// - Parameters:
+   ///   - tag: Command-associated tag.
+   ///   - handler: Instance of handler that should be triggered via the corresponding method on a command-associated tag signal.
    func trigger(command tag: String, for handler: AnyObject)
 }
 
-class WindowCommander {
+/// Handler instance information.
+fileprivate struct HandlerInfo {
+   /// TypeID of stored handler instance.
+   let typeID: TypeID
+   
+   /// Weak reference (``HandlerWeakRef``) of stored handler.
+   let ref: HandlerWeakRef
+   
+   /// Related window ``UUID`` to the handler instance.
+   var windowID: UUID?
+}
+
+/// An object that coordinates all command triggers by tags and registered handler instances.
+public class WindowCommander {
    static let shared = WindowCommander()
-   
-   private typealias TypeID = Int
+
    public typealias MethodHandlerCallbackType = () -> Void
-   
-   private struct HandlerInfo {
-      let typeID: TypeID
-      let ref: HandlerWeakRef
-      var windowID: UUID?
-   }
    
    private class CommandToMethodsBindingHandler<HandlerType>: MethodBindingHandler {
       typealias KeyPathType = KeyPath<HandlerType, MethodHandlerCallbackType>
