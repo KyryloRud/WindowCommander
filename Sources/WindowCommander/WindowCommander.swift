@@ -76,13 +76,11 @@ public class WindowCommander {
    
    /// Associate a command tag with a specific method for a `HandlerType`.
    ///
-   /// This method is semi-internal, it could be useful in some cases.
-   ///
    /// > Note: It is not recommended to use this method directly. The `register` method should be used instead.
    /// - Parameters:
    ///   - tag: Command tag.
    ///   - methodKeyPath: Handler method to process commands with the specified tag.
-   public func onCommand<HandlerType: AnyObject>(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> MethodHandlerCallbackType) {
+   internal func onCommand<HandlerType: AnyObject>(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> MethodHandlerCallbackType) {
       let typeID = typeID(of: HandlerType.self)
       
       if mHandlerTypesMap[typeID] == nil {
@@ -99,12 +97,10 @@ public class WindowCommander {
    /// It is possible to add the same instance more than once to the registry.
    /// This will cause command processing for each call.
    ///
-   /// This method is semi-internal, it could be useful in some cases.
-   ///
    /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
    /// - Parameter handler: A handler instance.
    /// - Returns: `UUID` of registred handler.
-   public func add<HandlerType: AnyObject>(handler: HandlerType) -> UUID {
+   internal func add<HandlerType: AnyObject>(handler: HandlerType) -> UUID {
       let instanceID = UUID()
       let typeID = typeID(of: HandlerType.self)
       
@@ -122,11 +118,9 @@ public class WindowCommander {
    
    /// Remove a handler instance from the ``WindowCommander`` registry.
    ///
-   /// This method is semi-internal, it could be useful in some cases.
-   ///
    /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
    /// - Parameter instanceID: `UUID` of registred handler.
-   public func remove(with instanceID: UUID) {
+   internal func remove(with instanceID: UUID) {
       if let instance = mHandlerInstancesMap[instanceID] {
          mHandlerTypesMap[instance.typeID]!.instances.remove(instanceID)
          
@@ -148,13 +142,11 @@ public class WindowCommander {
    
    /// Associate a handler with a specific window context.
    ///
-   /// This method is semi-internal, it could be useful in some cases.
-   ///
    /// > Note: It is not recommended to use this method directly. The ``KeyWindowContext`` will do this itself.
    /// - Parameters:
    ///   - instanceID: `UUID` of handler instance added to ``WindowCommander`` via `add` method.
    ///   - windowID: `UUID` of window instance of `NSWindow`.
-   public func setCommand(handler instanceID: UUID, for windowID: UUID) {
+   internal func setCommand(handler instanceID: UUID, for windowID: UUID) {
       guard mHandlerInstancesMap[instanceID] != nil else { return }
       
       if mWindowHandlersMap[windowID] == nil {
