@@ -4,7 +4,7 @@ Create contextual connection between SwiftUI Command execution and current activ
 
 @Metadata {
    @Available(iOS, introduced: "14.0")
-   @Available(macOS, introduced: "11.0")
+   @Available(macOS, introduced: "14.0")
    @Available(macCatalyst, introduced: "14.0")
    @Available(visionOS, introduced: "1.0 Beta")
 }

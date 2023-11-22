@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
    name: "WindowCommander",
    platforms: [
-      .macOS(.v13),
+      .macOS(.v14),
       .iOS(.v17) // Note: package is not supported by iOS, this line is required just to solve warnings
    ],
    products: [
