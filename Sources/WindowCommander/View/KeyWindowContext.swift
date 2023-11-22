@@ -27,6 +27,9 @@ import SwiftUI
 /// It is easy to register any handler type in ``KeyWindowContext``,
 /// also has a convinient interface to subscribe for key window updates only.
 ///
+/// > Note: The value update could have a small delay caused by the overhead
+/// > of `NotificationCenter` which could be noticeable for UI element updates.
+///
 /// ```swift
 /// struct ContentView: View {
 ///    @State private var isKeyWindow: Bool = false

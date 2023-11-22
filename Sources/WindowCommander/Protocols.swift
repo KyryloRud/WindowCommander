@@ -27,6 +27,9 @@ public protocol WKCommandTagHandler: AnyObject {
 /// the `onKeyWindowChanged` will be triggered on registered handlers in this window context.
 public protocol WKKeyWindowHandler: AnyObject {
    /// Process event, with a changed window status from the associated context.
+   ///
+   /// > Note: The value update could have a small delay caused by the overhead
+   /// > of `NotificationCenter` which could be noticeable for UI element updates.
    /// - Parameter isKeyWindow: New window status.
    func onKeyWindowChanged(isKeyWindow: Bool)
 }
