@@ -10,13 +10,13 @@ import Foundation
 extension WindowCommander {
    fileprivate struct HandlerMethodInfo<HandlerType> {
       let tag: String
-      let handlerMethod: (HandlerType) -> WindowCommander.MethodHandlerCallbackType
+      let handlerMethod: (HandlerType) -> MethodHandlerCallbackType
    }
    
    struct HandlerMethodRegistration<HandlerType: AnyObject> {
       fileprivate var info: HandlerMethodInfo<HandlerType>? = nil
       
-      func onCommand(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> WindowCommander.MethodHandlerCallbackType) -> HandlerMethodRegistration {
+      func onCommand(_ tag: String, process methodKeyPath: @escaping (HandlerType) -> MethodHandlerCallbackType) -> HandlerMethodRegistration {
          return HandlerMethodRegistration(info: HandlerMethodInfo(tag: tag, handlerMethod: methodKeyPath))
       }
    }

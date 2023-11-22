@@ -24,18 +24,6 @@ fileprivate class HandlerWeakRef {
    }
 }
 
-/// The complete list of properties and methods for internal method-binding handler.
-fileprivate protocol MethodBindingHandler {
-   /// If the handler contain any bound methods.
-   var isEmpty: Bool { get }
-   
-   /// Call the instance method associated with a specific handler on a specified instance.
-   /// - Parameters:
-   ///   - tag: Command-associated tag.
-   ///   - handler: Instance of handler that should be triggered via the corresponding method on a command-associated tag signal.
-   func trigger(command tag: String, for handler: AnyObject)
-}
-
 /// Handler instance information.
 fileprivate struct HandlerInfo {
    /// TypeID of stored handler instance.
@@ -51,30 +39,6 @@ fileprivate struct HandlerInfo {
 /// An object that coordinates all command triggers by tags and registered handler instances.
 public class WindowCommander {
    static let shared = WindowCommander()
-
-   public typealias MethodHandlerCallbackType = () -> Void
-   
-   private class CommandToMethodsBindingHandler<HandlerType>: MethodBindingHandler {
-      typealias KeyPathType = KeyPath<HandlerType, MethodHandlerCallbackType>
-      var commandTagAndMethodMap: [String: (HandlerType) -> MethodHandlerCallbackType]
-      var isEmpty: Bool {
-         get {
-            commandTagAndMethodMap.isEmpty
-         }
-      }
-      
-      init() {
-         commandTagAndMethodMap = [:]
-      }
-      
-      func trigger(command tag: String, for handler: AnyObject) {
-         if let method = commandTagAndMethodMap[tag] {
-            if let instance = handler as? HandlerType {
-               method(instance)()
-            }
-         }
-      }
-   }
    
    private var mHandlerInstancesMap: [UUID /* instance id */: HandlerInfo] = [:]
    private var mHandlerTypesMap: [TypeID /* type id */: (instances: Set<UUID>, handler: MethodBindingHandler)] = [:]
@@ -101,10 +65,10 @@ public class WindowCommander {
       let typeID = typeID(of: HandlerType.self)
       
       if mHandlerTypesMap[typeID] == nil {
-         mHandlerTypesMap[typeID] = (instances: [], handler: CommandToMethodsBindingHandler<HandlerType>())
+         mHandlerTypesMap[typeID] = (instances: [], handler: MethodsBindingHandler<HandlerType>())
       }
       
-      if let methodHandler = mHandlerTypesMap[typeID]!.handler as? CommandToMethodsBindingHandler<HandlerType> {
+      if let methodHandler = mHandlerTypesMap[typeID]!.handler as? MethodsBindingHandler<HandlerType> {
          methodHandler.commandTagAndMethodMap[tag] = methodKeyPath
       }
    }
@@ -116,7 +80,7 @@ public class WindowCommander {
       mHandlerInstancesMap[instanceID] = .init(typeID: typeID, ref: .init(handler), windowID: nil)
       
       if mHandlerTypesMap.keys.firstIndex(where: { $0 == typeID }) == nil {
-         let methodsHandler = CommandToMethodsBindingHandler<HandlerType>()
+         let methodsHandler = MethodsBindingHandler<HandlerType>()
          mHandlerTypesMap[typeID] = (instances: [instanceID], handler: methodsHandler)
       } else {
          mHandlerTypesMap[typeID]?.instances.insert(instanceID)
